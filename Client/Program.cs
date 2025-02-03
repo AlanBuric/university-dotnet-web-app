@@ -1,27 +1,16 @@
-using UniversityWebApp.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using UniversityWebApp;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveWebAssemblyComponents();
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp =>
-    new HttpClient
-    {
-        BaseAddress = new Uri(builder.Configuration["API_URL"])
-    });
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-var app = builder.Build();
+var apiUrl = builder.Configuration["apiUrl"] ?? throw new ArgumentNullException("Environment variable apiUrl can't be null");
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
-}
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiUrl) });
 
-app.UseHttpsRedirection();
-app.UseAntiforgery();
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveWebAssemblyRenderMode();
-app.Run();
+await builder.Build().RunAsync();

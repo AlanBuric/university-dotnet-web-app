@@ -3,7 +3,7 @@
 
 <PageTitle>Studenti</PageTitle>
 
-<h1>Studenti</h1>
+<h2>Studenti</h2>
 
 @if (!string.IsNullOrEmpty(apiError))
 {
@@ -20,24 +20,27 @@
 }
 else
 {
-	<h3>@(isEditing ? "Uredi studenta" : "Dodaj novog studenta")</h3>
+	<h4>@(isEditing ? "Uređivanje podataka o studentu" : "Dodavanje novog studenta")</h4>
 
 	<EditForm Model="@currentStudent" OnValidSubmit="HandleValidSubmit" FormName="studentForm">
 		<DataAnnotationsValidator />
 		<ValidationSummary />
 
-		<div class="mb-3">
-			<label for="Name" class="form-label">Ime</label>
-			<InputText id="Name" class="form-control" @bind-Value="currentStudent.Name" />
+		<div class="row g-2 mb-2">
+			<div class="col-12 col-md-4">
+				<label for="Name" class="form-label">Ime</label>
+				<InputText id="Name" class="form-control" @bind-Value="currentStudent.Name" />
+			</div>
+			<div class="col-12 col-md-4">
+				<label for="Surname" class="form-label">Prezime</label>
+				<InputText id="Surname" class="form-control" @bind-Value="currentStudent.Surname" />
+			</div>
+			<div class="col-12 col-md-4">
+				<label for="JMBAG" class="form-label">JMBAG</label>
+				<InputText id="JMBAG" class="form-control" @bind-Value="currentStudent.JMBAG" />
+			</div>
 		</div>
-		<div class="mb-3">
-			<label for="Surname" class="form-label">Prezime</label>
-			<InputText id="Surname" class="form-control" @bind-Value="currentStudent.Surname" />
-		</div>
-		<div class="mb-3">
-			<label for="JMBAG" class="form-label">JMBAG</label>
-			<InputText id="JMBAG" class="form-control" @bind-Value="currentStudent.JMBAG" />
-		</div>
+
 
 		<button type="submit" class="btn btn-success">
 			@(isEditing ? "Spremi promjene" : "Dodaj studenta")
@@ -118,7 +121,7 @@ else
 		{
 			if (isEditing)
 			{
-				var response = await Http.PutAsJsonAsync($"api/student/{currentStudent.Id}", currentStudent);
+				var response = await Http.PutAsJsonAsync($"api/student", currentStudent);
 
 				if (!response.IsSuccessStatusCode)
 				{
@@ -127,6 +130,12 @@ else
 				}
 
 				isEditing = false;
+
+				var index = Array.FindIndex(students, student => student.Id == currentStudent.Id);
+
+				if (index >= 0) {
+					students[index] = currentStudent;
+				}
 			}
 			else
 			{
@@ -137,10 +146,11 @@ else
 					apiError = $"Greška prilikom dodavanja studenta: {await response.Content.ReadAsStringAsync()}";
 					return;
 				}
+
+				await LoadStudents();
 			}
 
 			currentStudent = new Student();
-			await LoadStudents();
 		}
 		catch (Exception ex)
 		{

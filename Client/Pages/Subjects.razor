@@ -1,9 +1,10 @@
 ﻿@page "/"
 @inject HttpClient Http
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
 
 <PageTitle>Kolegiji</PageTitle>
 
-<h1>Kolegiji</h1>
+<h2>Kolegiji</h2>
 
 <p>Niže je naveden popis kolegija na Sveučilištu.</p>
 
@@ -13,9 +14,7 @@
 }
 else
 {
-	<h3>@(isEditing ? "Uredi kolegij" : "Dodaj novi kolegij")</h3>
-	<p>The Render mode is: @RendererInfo.Name</p>
-	<p>Interactive: @RendererInfo.IsInteractive</p>
+	<h4>@(isEditing ? "Uređivanje kolegija" : "Dodavanje novog kolegija")</h4>
 
 	@if (!string.IsNullOrEmpty(apiError))
 	{
@@ -112,7 +111,7 @@ else
 		{
 			if (isEditing)
 			{
-				var response = await Http.PutAsJsonAsync($"api/subject/{currentSubject.Id}", currentSubject);
+				var response = await Http.PutAsJsonAsync($"api/subject", currentSubject);
 
 				if (!response.IsSuccessStatusCode)
 				{
@@ -121,6 +120,13 @@ else
 				}
 
 				isEditing = false;
+
+				var index = Array.FindIndex(subjects, student => student.Id == currentSubject.Id);
+
+				if (index >= 0)
+				{
+					subjects[index] = currentSubject;
+				}
 			}
 			else
 			{
@@ -131,10 +137,11 @@ else
 					apiError = $"Greška prilikom dodavanja kolegija: {await response.Content.ReadAsStringAsync()}";
 					return;
 				}
+
+				await LoadSubjects();
 			}
 
 			currentSubject = new Subject();
-			await LoadSubjects();
 		}
 		catch (Exception ex)
 		{
@@ -146,11 +153,7 @@ else
 	{
 		isEditing = true;
 		apiError = null;
-		currentSubject = new Subject
-			{
-				Id = subject.Id,
-				Name = subject.Name
-			};
+		currentSubject = subject;
 	}
 
 	private async Task DeleteSubject(Subject subject)
