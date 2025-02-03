@@ -1,0 +1,192 @@
+﻿@page "/students"
+@inject HttpClient Http
+
+<PageTitle>Studenti</PageTitle>
+
+<h1>Studenti</h1>
+
+@if (!string.IsNullOrEmpty(apiError))
+{
+	<div class="alert alert-danger" role="alert">
+		@apiError
+	</div>
+}
+
+<p>Niže je naveden popis studenata upisanih na Sveučilište.</p>
+
+@if (students == null)
+{
+	<p><em>Učitavam...</em></p>
+}
+else
+{
+	<h3>@(isEditing ? "Uredi studenta" : "Dodaj novog studenta")</h3>
+
+	<EditForm Model="@currentStudent" OnValidSubmit="HandleValidSubmit" FormName="studentForm">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="mb-3">
+			<label for="Name" class="form-label">Ime</label>
+			<InputText id="Name" class="form-control" @bind-Value="currentStudent.Name" />
+		</div>
+		<div class="mb-3">
+			<label for="Surname" class="form-label">Prezime</label>
+			<InputText id="Surname" class="form-control" @bind-Value="currentStudent.Surname" />
+		</div>
+		<div class="mb-3">
+			<label for="JMBAG" class="form-label">JMBAG</label>
+			<InputText id="JMBAG" class="form-control" @bind-Value="currentStudent.JMBAG" />
+		</div>
+
+		<button type="submit" class="btn btn-success">
+			@(isEditing ? "Spremi promjene" : "Dodaj studenta")
+		</button>
+		@if (isEditing)
+		{
+			<button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Odustani</button>
+		}
+	</EditForm>
+
+	<hr />
+
+	@if (students.Length > 0)
+	{
+		<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Ime</th>
+					<th>Prezime</th>
+					<th>JMBAG</th>
+					<th>Akcije</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var student in students)
+				{
+					<tr>
+						<td>@student.Id</td>
+						<td>@student.Name</td>
+						<td>@student.Surname</td>
+						<td>@student.JMBAG</td>
+						<td>
+							<button class="btn btn-primary btn-sm" @onclick="() => EditStudent(student)">Uredi</button>
+							<button class="btn btn-danger btn-sm" @onclick="() => DeleteStudent(student)">Obriši</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+	else
+	{
+		<p class="text-center">Sveučilište trenutno nema upisanih studenata.</p>
+	}
+}
+
+@code {
+	private Student[]? students;
+	private Student currentStudent = new Student();
+	private string? apiError;
+	private bool isEditing = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadStudents();
+	}
+
+	private async Task LoadStudents()
+	{
+		apiError = null;
+
+		try
+		{
+			students = await Http.GetFromJsonAsync<Student[]>("api/student");
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške pri učitavanju studenata: {ex.Message}";
+		}
+	}
+
+	private async Task HandleValidSubmit()
+	{
+		apiError = null;
+
+		try
+		{
+			if (isEditing)
+			{
+				var response = await Http.PutAsJsonAsync($"api/student/{currentStudent.Id}", currentStudent);
+
+				if (!response.IsSuccessStatusCode)
+				{
+					apiError = $"Greška prilikom uređivanja studenta: {response.ReasonPhrase}";
+					return;
+				}
+
+				isEditing = false;
+			}
+			else
+			{
+				var response = await Http.PostAsJsonAsync("api/student", currentStudent);
+
+				if (!response.IsSuccessStatusCode)
+				{
+					apiError = $"Greška prilikom dodavanja studenta: {await response.Content.ReadAsStringAsync()}";
+					return;
+				}
+			}
+
+			currentStudent = new Student();
+			await LoadStudents();
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške: {ex.Message}";
+		}
+	}
+
+	private void EditStudent(Student student)
+	{
+		isEditing = true;
+		apiError = null;
+		currentStudent = new Student
+			{
+				Id = student.Id,
+				Name = student.Name,
+				Surname = student.Surname,
+				JMBAG = student.JMBAG
+			};
+	}
+
+	private async Task DeleteStudent(Student student)
+	{
+		apiError = null;
+
+		try
+		{
+			var response = await Http.DeleteAsync($"api/student/{student.Id}");
+
+			if (!response.IsSuccessStatusCode)
+			{
+				apiError = $"Greška prilikom brisanja studenta: {response.ReasonPhrase}";
+				return;
+			}
+
+			await LoadStudents();
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške prilikom brisanja: {ex.Message}";
+		}
+	}
+
+	private void CancelEdit()
+	{
+		isEditing = false;
+		currentStudent = new Student();
+		apiError = null;
+	}
+}
