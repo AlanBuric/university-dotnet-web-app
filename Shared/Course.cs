@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UniversityWebApp.Shared
 {
-    [Table("Subjects")]
-    public class Subject
+    [Table("Courses")]
+    public class Course
     {
         public int Id { get; set; }
 
@@ -12,7 +12,5 @@ namespace UniversityWebApp.Shared
         [Column(TypeName = "nvarchar(127)")]
         [StringLength(127, MinimumLength = 1)]
         public string Name { get; set; }
-
-        public ICollection<Enrollment> Enrollments { get; set; } = [];
     }
 }

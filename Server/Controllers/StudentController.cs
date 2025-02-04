@@ -1,4 +1,7 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using UniversityWebApp.Config;
 using UniversityWebApp.Database;
 using UniversityWebApp.Shared;
 
@@ -6,12 +9,24 @@ namespace UniversityWebApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class StudentController(ApplicationDbContext context) : ControllerBase
+    public class StudentController(ApplicationDbContext context, IOptions<AppOptions> appOptions) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
 
         [HttpGet]
-        public ActionResult<IEnumerable<Student>> GetStudents() => Ok(_context.Students.ToList());
+        public ActionResult<IEnumerable<Student>> GetStudents([FromQuery] string? filter)
+        {
+            var query = _context.Students.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                query = query.Where(s => s.FirstName.Contains(filter)
+                                      || s.LastName.Contains(filter)
+                                      || s.JMBAG.Contains(filter));
+            }
+
+            return Ok(query.Take(appOptions.Value.MaxResponseRowCount).ToArray());
+        }
 
         [HttpGet("{id}")]
         public ActionResult<Student> GetStudent(int id)
@@ -40,8 +55,8 @@ namespace UniversityWebApp.Controllers
                 return NotFound();
             }
 
-            existingStudent.Name = student.Name;
-            existingStudent.Surname = student.Surname;
+            existingStudent.FirstName = student.FirstName;
+            existingStudent.LastName = student.LastName;
             existingStudent.JMBAG = student.JMBAG;
 
             _context.SaveChanges();

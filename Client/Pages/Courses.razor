@@ -8,7 +8,7 @@
 
 <p>Niže je naveden popis kolegija na Sveučilištu.</p>
 
-@if (subjects == null)
+@if (courses == null)
 {
 	<p><em>Učitavam...</em></p>
 }
@@ -23,13 +23,13 @@ else
 		</div>
 	}
 
-	<EditForm Model="currentSubject" OnValidSubmit="HandleValidSubmit" FormName="SubjectForm">
+	<EditForm Model="currentCourse" OnValidSubmit="HandleValidSubmit" FormName="CourseForm">
 		<DataAnnotationsValidator />
 		<ValidationSummary />
 
 		<div class="mb-3">
 			<label for="Name" class="form-label">Naziv</label>
-			<InputText id="Name" class="form-control" @bind-Value="currentSubject.Name" />
+			<InputText id="Name" class="form-control" @bind-Value="currentCourse.Name" />
 		</div>
 
 		<button type="submit" class="btn btn-success">
@@ -43,7 +43,7 @@ else
 
 	<hr />
 
-	@if (subjects.Length > 0)
+	@if (courses.Length > 0)
 	{
 		<table class="table">
 			<thead>
@@ -54,14 +54,14 @@ else
 				</tr>
 			</thead>
 			<tbody>
-				@foreach (var subject in subjects)
+				@foreach (var course in courses)
 				{
 					<tr>
-						<td>@subject.Id</td>
-						<td>@subject.Name</td>
+						<td>@course.Id</td>
+						<td>@course.Name</td>
 						<td>
-							<button class="btn btn-primary btn-sm" @onclick="() => EditSubject(subject)">Uredi</button>
-							<button class="btn btn-danger btn-sm" @onclick="() => DeleteSubject(subject)">Obriši</button>
+							<button class="btn btn-primary btn-sm" @onclick="() => EditCourse(course)">Uredi</button>
+							<button class="btn btn-danger btn-sm" @onclick="() => DeleteCourse(course)">Obriši</button>
 						</td>
 					</tr>
 				}
@@ -75,9 +75,9 @@ else
 }
 
 @code {
-	private Subject[]? subjects;
+	private Course[]? courses;
 
-	private Subject currentSubject { get; set; } = new Subject();
+	private Course currentCourse { get; set; } = new Course();
 
 	private bool isEditing = false;
 
@@ -85,17 +85,17 @@ else
 
 	protected override async Task OnInitializedAsync()
 	{
-		currentSubject = new Subject();
-		await LoadSubjects();
+		currentCourse = new Course();
+		await LoadCourses();
 	}
 
-	private async Task LoadSubjects()
+	private async Task LoadCourses()
 	{
 		apiError = null;
 
 		try
 		{
-			subjects = await Http.GetFromJsonAsync<Subject[]>("api/subject");
+			courses = await Http.GetFromJsonAsync<Course[]>("api/course");
 		}
 		catch (Exception ex)
 		{
@@ -111,7 +111,7 @@ else
 		{
 			if (isEditing)
 			{
-				var response = await Http.PutAsJsonAsync($"api/subject", currentSubject);
+				var response = await Http.PutAsJsonAsync($"api/course", currentCourse);
 
 				if (!response.IsSuccessStatusCode)
 				{
@@ -121,16 +121,16 @@ else
 
 				isEditing = false;
 
-				var index = Array.FindIndex(subjects, student => student.Id == currentSubject.Id);
+				var index = Array.FindIndex(courses!, student => student.Id == currentCourse.Id);
 
 				if (index >= 0)
 				{
-					subjects[index] = currentSubject;
+					courses[index] = currentCourse;
 				}
 			}
 			else
 			{
-				var response = await Http.PostAsJsonAsync("api/subject", currentSubject);
+				var response = await Http.PostAsJsonAsync("api/course", currentCourse);
 
 				if (!response.IsSuccessStatusCode)
 				{
@@ -138,10 +138,10 @@ else
 					return;
 				}
 
-				await LoadSubjects();
+				await LoadCourses();
 			}
 
-			currentSubject = new Subject();
+			currentCourse = new Course();
 		}
 		catch (Exception ex)
 		{
@@ -149,20 +149,20 @@ else
 		}
 	}
 
-	private void EditSubject(Subject subject)
+	private void EditCourse(Course course)
 	{
 		isEditing = true;
 		apiError = null;
-		currentSubject = subject;
+		currentCourse = course;
 	}
 
-	private async Task DeleteSubject(Subject subject)
+	private async Task DeleteCourse(Course course)
 	{
 		apiError = null;
 
 		try
 		{
-			var response = await Http.DeleteAsync($"api/subject/{subject.Id}");
+			var response = await Http.DeleteAsync($"api/course/{course.Id}");
 
 			if (!response.IsSuccessStatusCode)
 			{
@@ -170,7 +170,7 @@ else
 				return;
 			}
 
-			await LoadSubjects();
+			await LoadCourses();
 		}
 		catch (Exception ex)
 		{
@@ -181,7 +181,7 @@ else
 	private void CancelEdit()
 	{
 		isEditing = false;
-		currentSubject = new Subject();
+		currentCourse = new Course();
 		apiError = null;
 	}
 }

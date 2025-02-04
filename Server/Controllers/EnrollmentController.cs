@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using UniversityWebApp.Config;
 using UniversityWebApp.Database;
 using UniversityWebApp.Shared;
 
@@ -7,28 +9,32 @@ namespace UniversityWebApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EnrollmentController(ApplicationDbContext context) : ControllerBase
+    public class EnrollmentController(ApplicationDbContext context, IOptions<AppOptions> appOptions) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
 
         [HttpGet]
-        public ActionResult<IEnumerable<Enrollment>> GetEnrollments()
+        public ActionResult<IEnumerable<Enrollment>> GetEnrollments([FromQuery] int? studentId, [FromQuery] int? courseId)
         {
-            var enrollments = _context.Enrollments
-                .Include(e => e.Student)
-                .Include(e => e.Subject)
-                .ToList();
+            var query = _context.Enrollments.AsQueryable();
 
-            return Ok(enrollments);
+            if (studentId != null)
+            {
+                query = query.Where(e => e.StudentId == studentId);
+            }
+
+            if (courseId != null)
+            {
+                query = query.Where(e => e.CourseId == courseId);
+            }
+
+            return Ok(query.ToArray());
         }
 
         [HttpGet("{id}")]
         public ActionResult<Enrollment> GetEnrollment(int id)
         {
-            var enrollment = _context.Enrollments
-                .Include(e => e.Student)
-                .Include(e => e.Subject)
-                .FirstOrDefault(e => e.Id == id);
+            var enrollment = _context.Enrollments.FirstOrDefault(e => e.Id == id);
 
             return enrollment == null ? NotFound() : Ok(enrollment);
         }
@@ -43,11 +49,11 @@ namespace UniversityWebApp.Controllers
                 return BadRequest($"Student with ID {enrollment.StudentId} does not exist.");
             }
 
-            bool subjectExists = _context.Subjects.Any(s => s.Id == enrollment.SubjectId);
+            bool courseExists = _context.Courses.Any(s => s.Id == enrollment.CourseId);
 
-            if (!subjectExists)
+            if (!courseExists)
             {
-                return BadRequest($"Subject with ID {enrollment.SubjectId} does not exist.");
+                return BadRequest($"Course with ID {enrollment.CourseId} does not exist.");
             }
 
             _context.Enrollments.Add(enrollment);
@@ -68,7 +74,7 @@ namespace UniversityWebApp.Controllers
             }
 
             existingEnrollment.StudentId = enrollment.StudentId;
-            existingEnrollment.SubjectId = enrollment.SubjectId;
+            existingEnrollment.CourseId = enrollment.CourseId;
             existingEnrollment.Points = enrollment.Points;
 
             _context.SaveChanges();

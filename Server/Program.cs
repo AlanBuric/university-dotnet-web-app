@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using UniversityWebApp.Config;
 using UniversityWebApp.Database;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<AppOptions>(builder.Configuration);
 
 var frontendUrl = builder.Configuration["FrontendUrl"] ?? throw new ArgumentNullException("Environment variable 'FrontendUrl' not found.");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Connection string 'DefaultConnection' not found.");

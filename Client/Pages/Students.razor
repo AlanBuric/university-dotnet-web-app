@@ -29,11 +29,11 @@ else
 		<div class="row g-2 mb-3">
 			<div class="col-12 col-md-4">
 				<label for="Name" class="form-label">Ime</label>
-				<InputText id="Name" class="form-control" @bind-Value="currentStudent.Name" />
+				<InputText id="Name" class="form-control" @bind-Value="currentStudent.FirstName" />
 			</div>
 			<div class="col-12 col-md-4">
 				<label for="Surname" class="form-label">Prezime</label>
-				<InputText id="Surname" class="form-control" @bind-Value="currentStudent.Surname" />
+				<InputText id="Surname" class="form-control" @bind-Value="currentStudent.LastName" />
 			</div>
 			<div class="col-12 col-md-4">
 				<label for="JMBAG" class="form-label">JMBAG</label>
@@ -62,7 +62,7 @@ else
 					<th>Ime</th>
 					<th>Prezime</th>
 					<th>JMBAG</th>
-					<th>Akcije</th>
+					<th>Radnje</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -70,8 +70,8 @@ else
 				{
 					<tr>
 						<td>@student.Id</td>
-						<td>@student.Name</td>
-						<td>@student.Surname</td>
+						<td>@student.FirstName</td>
+						<td>@student.LastName</td>
 						<td>@student.JMBAG</td>
 						<td>
 							<button class="btn btn-primary btn-sm" @onclick="() => EditStudent(student)">Uredi</button>
@@ -131,7 +131,7 @@ else
 
 				isEditing = false;
 
-				var index = Array.FindIndex(students, student => student.Id == currentStudent.Id);
+				var index = Array.FindIndex(students!, student => student.Id == currentStudent.Id);
 
 				if (index >= 0) {
 					students[index] = currentStudent;
@@ -165,8 +165,8 @@ else
 		currentStudent = new Student
 			{
 				Id = student.Id,
-				Name = student.Name,
-				Surname = student.Surname,
+				FirstName = student.FirstName,
+				LastName = student.LastName,
 				JMBAG = student.JMBAG
 			};
 	}

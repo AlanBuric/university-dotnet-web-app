@@ -1,7 +1,195 @@
 ﻿@page "/enrollments"
+@inject HttpClient Http
 
 <PageTitle>Upisi</PageTitle>
 
 <h2>Upisi studenata na kolegije</h2>
 
-<p>Niže odaberite studenta i kolegij za izvršavanje upisa.</p>
+<p>Odaberite studenta i kolegij te unesite bodove za upis.</p>
+
+@if (!string.IsNullOrEmpty(apiError))
+{
+    <div class="alert alert-danger" role="alert">
+        @apiError
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success" role="alert">
+        @successMessage
+    </div>
+}
+
+<div class="row g-2 mb-3">
+    <div class="col-18 col-md-6">
+        <label for="studentFilter" class="form-label">Pretraži studente</label>
+        <InputText id="studentFilter" class="form-control" @bind-Value="studentFilter" />
+        <button class="btn btn-primary mt-1" @onclick="LoadFilteredStudents">Pretraži studente</button>
+    </div>
+
+    <div class="col-18 col-md-6">
+        <label for="courseFilter" class="form-label">Pretraži kolegije</label>
+        <InputText id="courseFilter" class="form-control" @bind-Value="courseFilter" />
+        <button class="btn btn-primary mt-1" @onclick="LoadFilteredCourses">Pretraži kolegije</button>
+    </div>
+</div>
+
+<hr />
+
+<div class="row g-2 mb-3">
+    <div class="col-18 col-md-6">
+        <label for="studentSelect" class="form-label">Odaberi studenta</label>
+        <select id="studentSelect" class="form-select" @bind="selectedStudentId">
+            <option value="">-- Odaberite studenta --</option>
+            @if (filteredStudents != null)
+            {
+                @foreach (var student in filteredStudents)
+                {
+                    <option value="@student.Id">
+                        @student.FirstName @student.LastName (@student.JMBAG)
+                    </option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="col-18 col-md-6">
+        <label for="courseSelect" class="form-label">Odaberi kolegij</label>
+        <select id="courseSelect" class="form-select" @bind="selectedCourseId">
+            <option value="">-- Odaberite kolegij --</option>
+            @if (filteredCourses != null)
+            {
+                @foreach (var course in filteredCourses)
+                {
+                    <option value="@course.Id">@course.Name</option>
+                }
+            }
+        </select>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label for="points" class="form-label">Ostvareni bodovi</label>
+    <InputNumber id="points" class="form-control" @bind-Value="points" />
+</div>
+
+<button class="btn btn-success" @onclick="EnrollStudent">Upiši studenta</button>
+
+@code {
+    private string? apiError;
+    private string? successMessage;
+
+    private string studentFilter = string.Empty;
+    private string courseFilter = string.Empty;
+
+    private Student[]? filteredStudents;
+    private Course[]? filteredCourses;
+
+    private int? selectedStudentId;
+    private int? selectedCourseId;
+    private int points;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFilteredStudents();
+        await LoadFilteredCourses();
+    }
+
+    private async Task LoadFilteredStudents()
+    {
+        apiError = null;
+        successMessage = null;
+
+        try
+        {
+            filteredStudents = await Http.GetFromJsonAsync<Student[]>($"api/student?filter={studentFilter}");
+        }
+        catch (Exception ex)
+        {
+            apiError = $"Greška pri učitavanju studenata: {ex.Message}";
+        }
+    }
+
+    private async Task LoadFilteredCourses()
+    {
+        apiError = null;
+        successMessage = null;
+
+        try
+        {
+            filteredCourses = await Http.GetFromJsonAsync<Course[]>($"api/course?filter={courseFilter}");
+        }
+        catch (Exception ex)
+        {
+            apiError = $"Greška pri učitavanju kolegija: {ex.Message}";
+        }
+    }
+
+    private async Task EnrollStudent()
+    {
+        apiError = null;
+        successMessage = null;
+
+        if (selectedStudentId == null || selectedCourseId == null)
+        {
+            apiError = "Morate odabrati studenta i kolegij.";
+            return;
+        }
+
+        try
+        {
+            var existingEnrollments = await Http.GetFromJsonAsync<Enrollment[]>($"api/enrollment?studentId={selectedStudentId.Value}&courseId={selectedCourseId.Value}");
+
+            if (existingEnrollments != null && existingEnrollments.Any())
+            {
+                apiError = "Student je već upisan u odabrani kolegij.";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            apiError = $"Greška pri provjeri postojećeg upisa: {ex.Message}";
+            return;
+        }
+
+        var newEnrollment = new Enrollment
+            {
+                StudentId = selectedStudentId.Value,
+                CourseId = selectedCourseId.Value,
+                Points = points
+            };
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/enrollment", newEnrollment);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                apiError = $"Greška pri upisu studenta: {response.ReasonPhrase}";
+            }
+            else
+            {
+                var student = filteredStudents?.FirstOrDefault(s => s.Id == selectedStudentId);
+                var course = filteredCourses?.FirstOrDefault(c => c.Id == selectedCourseId);
+
+                if (student != null && course != null)
+                {
+                    successMessage = $"Uspješno je upisan student {student.FirstName} {student.LastName} na kolegij {course.Name}.";
+                }
+                else
+                {
+                    successMessage = "Upis je uspješan.";
+                }
+
+                selectedStudentId = null;
+                selectedCourseId = null;
+                points = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            apiError = $"Došlo je do pogreške: {ex.Message}";
+        }
+    }
+}

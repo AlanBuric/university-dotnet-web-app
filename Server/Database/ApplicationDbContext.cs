@@ -5,7 +5,7 @@ namespace UniversityWebApp.Database
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
     {
-        public DbSet<Subject> Subjects { get; set; }
+        public DbSet<Course> Courses { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
 
@@ -13,17 +13,21 @@ namespace UniversityWebApp.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Subject>()
-                .HasMany(s => s.Enrollments)
-                .WithOne(e => e.Subject)
-                .HasForeignKey(e => e.SubjectId)
+            modelBuilder.Entity<Enrollment>()
+               .HasOne<Student>()
+               .WithMany()
+               .HasForeignKey("StudentId")
+               .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Enrollment>()
+                .HasOne<Course>()
+                .WithMany()
+                .HasForeignKey("CourseId")
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Student>()
-                .HasMany(s => s.Enrollments)
-                .WithOne(e => e.Student)
-                .HasForeignKey(e => e.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Enrollment>()
+               .HasIndex("StudentId", "CourseId")
+               .IsUnique();
         }
     }
 }
