@@ -10,227 +10,288 @@
 
 @if (courses == null)
 {
-    <p><em>Učitavam...</em></p>
+	<p><em>Učitavam...</em></p>
 }
 else
 {
-    <h4>@(isEditing ? "Uređivanje kolegija" : "Dodavanje novog kolegija")</h4>
+	<h4>@(isEditing ? "Uređivanje kolegija" : "Dodavanje novog kolegija")</h4>
 
-    @if (!string.IsNullOrEmpty(apiError))
-    {
-        <div class="alert alert-danger" role="alert">
-            @apiError
-        </div>
-    }
+	@if (!string.IsNullOrEmpty(apiError))
+	{
+		<div class="alert alert-danger" role="alert">
+			@apiError
+		</div>
+	}
 
-    <EditForm Model="currentCourse" OnValidSubmit="HandleValidSubmit" FormName="CourseForm">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+	<EditForm Model="currentCourse" OnValidSubmit="HandleValidSubmit" FormName="CourseForm">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
 
-        <div class="mb-3">
-            <label for="Name" class="form-label">Naziv kolegija</label>
-            <InputText id="Name" class="form-control" @bind-Value="currentCourse.Name" placeholder="Naziv kolegija" />
-        </div>
+		<div class="mb-3">
+			<label for="Name" class="form-label">Naziv kolegija</label>
+			<InputText id="Name" class="form-control" @bind-Value="currentCourse.Name" placeholder="Naziv kolegija" />
+		</div>
 
-        <button type="submit" class="btn btn-success">
-            @(isEditing ? "Spremi promjene" : "Dodaj kolegij")
-        </button>
-        @if (isEditing)
-        {
-            <button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Odustani</button>
-        }
-    </EditForm>
+		<button type="submit" class="btn btn-success">
+			@(isEditing ? "Spremi promjene" : "Dodaj kolegij")
+		</button>
+		@if (isEditing)
+		{
+			<button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Odustani</button>
+		}
+	</EditForm>
 
-    <hr />
+	<hr />
 
-    @if (courses.Length > 0)
-    {
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Naziv</th>
-                    <th>Radnje</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var course in courses)
-                {
-                    <tr>
-                        <td>@course.Id</td>
-                        <td>@course.Name</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" @onclick="() => EditCourse(course)">Uredi</button>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteCourse(course)">Obriši</button>
-                            <button class="btn btn-info btn-sm" @onclick="() => ToggleEnrollments(course.Id)">
-                                @(expandedCourseId == course.Id ? "Sakrij upise" : "Prikaži upise")
-                            </button>
-                        </td>
-                    </tr>
+	@if (courses.Length > 0)
+	{
+		<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Naziv</th>
+					<th>Radnje</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var course in courses)
+				{
+					<tr>
+						<td>@course.Id</td>
+						<td>@course.Name</td>
+						<td>
+							<button class="btn btn-primary btn-sm" @onclick="() => EditCourse(course)">Uredi</button>
+							<button class="btn btn-danger btn-sm" @onclick="() => DeleteCourse(course)">Obriši</button>
+							<button class="btn btn-info btn-sm ms-2" @onclick="() => ToggleEnrollments(course.Id)">
+								@(expandedCourseId == course.Id ? "Sakrij upise" : "Prikaži upise")
+							</button>
+						</td>
+					</tr>
 
-                    @if (expandedCourseId == course.Id)
-                    {
-                        <tr>
-                            <td colspan="3">
-                                @if (courseEnrollments == null)
-                                {
-                                    <p><em>Učitavam upise...</em></p>
-                                }
-                                else if (courseEnrollments.Length == 0)
-                                {
-                                    <p>Nema upisanih studenata na ovome kolegiju.</p>
-                                }
-                                else
-                                {
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Student</th>
-                                                <th>Bodovi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var enrollment in courseEnrollments)
-                                            {
-                                                <tr>
-                                                    <td>@enrollment.Student.FirstName @enrollment.Student.LastName (@enrollment.Student.JMBAG)</td>
-                                                    <td>@enrollment.Points</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                }
-                            </td>
-                        </tr>
-                    }
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <p class="text-center">Sveučilište trenutno nema unesenih kolegija.</p>
-    }
+					@if (expandedCourseId == course.Id)
+					{
+						<tr>
+							<td colspan="3">
+								@if (courseEnrollments == null)
+								{
+									<p><em>Učitavam upise...</em></p>
+								}
+								else if (courseEnrollments.Length == 0)
+								{
+									<p>Nema upisanih studenata na ovome kolegiju.</p>
+								}
+								else
+								{
+									<table class="table table-sm">
+										<thead>
+											<tr>
+												<th>Student</th>
+												<th>Bodovi</th>
+												<th>Radnje</th>
+											</tr>
+										</thead>
+										<tbody>
+											@foreach (var enrollment in courseEnrollments)
+											{
+												<tr>
+													<td>@enrollment.Student.FirstName @enrollment.Student.LastName (@enrollment.Student.JMBAG)</td>
+													<td>
+														@if (editingEnrollmentId == enrollment.Id)
+														{
+															<InputNumber @bind-Value="editingPoints" class="form-control form-control-sm" style="width:80px" />
+														}
+														else
+														{
+															@enrollment.Points
+														}
+													</td>
+													<td>
+														@if (editingEnrollmentId == enrollment.Id)
+														{
+															<button class="btn btn-success btn-sm" @onclick="() => SaveEnrollment(enrollment)">Spremi</button>
+															<button class="btn btn-secondary btn-sm ms-1" @onclick="CancelEnrollmentEdit">Odustani</button>
+														}
+														else
+														{
+															<button class="btn btn-warning btn-sm" @onclick="() => EditEnrollment(enrollment)">Uredi bodove</button>
+														}
+													</td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								}
+							</td>
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+	}
+	else
+	{
+		<p class="text-center">Sveučilište trenutno nema unesenih kolegija.</p>
+	}
 }
 
 @code {
-    private Course[]? courses;
-    private EnrollmentResponse[]? courseEnrollments;
-    private Course currentCourse { get; set; } = new Course();
-    private int? expandedCourseId = null;
-    private bool isEditing = false;
-    private string? apiError;
+	private Course[]? courses;
+	private EnrollmentResponse[]? courseEnrollments;
+	private Course currentCourse { get; set; } = new Course();
+	private int? expandedCourseId = null;
+	private bool isEditing = false;
+	private string? apiError;
+	private int? editingEnrollmentId = null;
+	private int editingPoints;
 
-    protected override async Task OnInitializedAsync()
-    {
-        currentCourse = new Course();
-        await LoadCourses();
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		currentCourse = new Course();
+		await LoadCourses();
+	}
 
-    private async Task LoadCourses()
-    {
-        apiError = null;
-        try
-        {
-            courses = await Http.GetFromJsonAsync<Course[]>("api/course");
-        }
-        catch (Exception ex)
-        {
-            apiError = $"Došlo je do pogreške pri učitavanju kolegija: {ex.Message}";
-        }
-    }
+	private async Task LoadCourses()
+	{
+		apiError = null;
+		try
+		{
+			courses = await Http.GetFromJsonAsync<Course[]>("api/course");
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške pri učitavanju kolegija: {ex.Message}";
+		}
+	}
 
-    private async Task HandleValidSubmit()
-    {
-        apiError = null;
-        try
-        {
-            if (isEditing)
-            {
-                var response = await Http.PutAsJsonAsync("api/course", currentCourse);
-                if (!response.IsSuccessStatusCode)
-                {
-                    apiError = $"Greška prilikom uređivanja kolegija: {response.ReasonPhrase}";
-                    return;
-                }
-                isEditing = false;
+	private async Task HandleValidSubmit()
+	{
+		apiError = null;
+		try
+		{
+			if (isEditing)
+			{
+				var response = await Http.PutAsJsonAsync("api/course", currentCourse);
+				if (!response.IsSuccessStatusCode)
+				{
+					apiError = $"Greška prilikom uređivanja kolegija: {response.ReasonPhrase}";
+					return;
+				}
+				isEditing = false;
 
-                var index = Array.FindIndex(courses!, c => c.Id == currentCourse.Id);
+				var index = Array.FindIndex(courses!, c => c.Id == currentCourse.Id);
+				if (index >= 0)
+				{
+					courses![index] = currentCourse;
+				}
+			}
+			else
+			{
+				var response = await Http.PostAsJsonAsync("api/course", currentCourse);
+				if (!response.IsSuccessStatusCode)
+				{
+					apiError = $"Greška prilikom dodavanja kolegija: {await response.Content.ReadAsStringAsync()}";
+					return;
+				}
+				await LoadCourses();
+			}
+			currentCourse = new Course();
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške: {ex.Message}";
+		}
+	}
 
-                if (index >= 0)
-                {
-                    courses![index] = currentCourse;
-                }
-            }
-            else
-            {
-                var response = await Http.PostAsJsonAsync("api/course", currentCourse);
-                if (!response.IsSuccessStatusCode)
-                {
-                    apiError = $"Greška prilikom dodavanja kolegija: {await response.Content.ReadAsStringAsync()}";
-                    return;
-                }
-                await LoadCourses();
-            }
-            currentCourse = new Course();
-        }
-        catch (Exception ex)
-        {
-            apiError = $"Došlo je do pogreške: {ex.Message}";
-        }
-    }
+	private void EditCourse(Course course)
+	{
+		isEditing = true;
+		apiError = null;
+		currentCourse = course;
+	}
 
-    private void EditCourse(Course course)
-    {
-        isEditing = true;
-        apiError = null;
-        currentCourse = course;
-    }
+	private async Task DeleteCourse(Course course)
+	{
+		apiError = null;
+		try
+		{
+			var response = await Http.DeleteAsync($"api/course/{course.Id}");
+			if (!response.IsSuccessStatusCode)
+			{
+				apiError = $"Greška prilikom brisanja kolegija: {response.ReasonPhrase}";
+				return;
+			}
+			await LoadCourses();
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške pri brisanju: {ex.Message}";
+		}
+	}
 
-    private async Task DeleteCourse(Course course)
-    {
-        apiError = null;
-        try
-        {
-            var response = await Http.DeleteAsync($"api/course/{course.Id}");
-            if (!response.IsSuccessStatusCode)
-            {
-                apiError = $"Greška prilikom brisanja kolegija: {response.ReasonPhrase}";
-                return;
-            }
-            await LoadCourses();
-        }
-        catch (Exception ex)
-        {
-            apiError = $"Došlo je do pogreške pri brisanju: {ex.Message}";
-        }
-    }
+	private void CancelEdit()
+	{
+		isEditing = false;
+		currentCourse = new Course();
+		apiError = null;
+	}
 
-    private void CancelEdit()
-    {
-        isEditing = false;
-        currentCourse = new Course();
-        apiError = null;
-    }
+	private async Task ToggleEnrollments(int courseId)
+	{
+		if (expandedCourseId == courseId)
+		{
+			expandedCourseId = null;
+			courseEnrollments = null;
+		}
+		else
+		{
+			expandedCourseId = courseId;
+			try
+			{
+				courseEnrollments = await Http.GetFromJsonAsync<EnrollmentResponse[]>($"api/enrollment?courseId={courseId}");
+			}
+			catch (Exception ex)
+			{
+				apiError = $"Greška pri učitavanju upisa: {ex.Message}";
+			}
+		}
+	}
 
-    private async Task ToggleEnrollments(int courseId)
-    {
-        if (expandedCourseId == courseId)
-        {
-            expandedCourseId = null;
-            courseEnrollments = null;
-        }
-        else
-        {
-            expandedCourseId = courseId;
-            try
-            {
-                courseEnrollments = await Http.GetFromJsonAsync<EnrollmentResponse[]>($"api/enrollment?courseId={courseId}");
-            }
-            catch (Exception ex)
-            {
-                apiError = $"Greška pri učitavanju upisa: {ex.Message}";
-            }
-        }
-    }
+
+	private void EditEnrollment(EnrollmentResponse enrollment)
+	{
+		editingEnrollmentId = enrollment.Id;
+		editingPoints = enrollment.Points;
+	}
+
+	private void CancelEnrollmentEdit()
+	{
+		editingEnrollmentId = null;
+	}
+
+	private async Task SaveEnrollment(EnrollmentResponse enrollment)
+	{
+		enrollment.Points = editingPoints;
+		try
+		{
+			var response = await Http.PutAsJsonAsync("api/enrollment", enrollment);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				apiError = $"Greška pri uređivanju bodova: {response.ReasonPhrase}";
+			}
+			else
+			{
+				if (expandedCourseId.HasValue)
+				{
+					courseEnrollments = await Http.GetFromJsonAsync<EnrollmentResponse[]>($"api/enrollment?courseId={expandedCourseId.Value}");
+				}
+
+				editingEnrollmentId = null;
+			}
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške pri uređivanju bodova: {ex.Message}";
+		}
+	}
 }
