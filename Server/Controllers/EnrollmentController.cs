@@ -9,12 +9,12 @@ namespace UniversityWebApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EnrollmentController(ApplicationDbContext context, IOptions<AppOptions> appOptions) : ControllerBase
+    public class EnrollmentController(ApplicationDbContext context) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
 
         [HttpGet]
-        public ActionResult<IEnumerable<Enrollment>> GetEnrollments([FromQuery] int? studentId, [FromQuery] int? courseId)
+        public ActionResult<IEnumerable<EnrollmentResponse>> GetEnrollments([FromQuery] int? studentId, [FromQuery] int? courseId)
         {
             var query = _context.Enrollments.AsQueryable();
 
@@ -28,19 +28,55 @@ namespace UniversityWebApp.Controllers
                 query = query.Where(e => e.CourseId == courseId);
             }
 
-            return Ok(query.ToArray());
+            var enrollmentResponses = (from e in query
+                                       join s in _context.Students on e.StudentId equals s.Id
+                                       join c in _context.Courses on e.CourseId equals c.Id
+                                       select new EnrollmentResponse
+                                       {
+                                           Id = e.Id,
+                                           StudentId = e.StudentId,
+                                           CourseId = e.CourseId,
+                                           Points = e.Points,
+                                           Student = s,
+                                           Course = c
+                                       }).ToArray();
+
+            return Ok(enrollmentResponses);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Enrollment> GetEnrollment(int id)
+        public ActionResult<EnrollmentResponse> GetEnrollment(int id)
         {
-            var enrollment = _context.Enrollments.FirstOrDefault(e => e.Id == id);
+            var enrollment = _context.Enrollments.Find(id);
 
-            return enrollment == null ? NotFound() : Ok(enrollment);
+            if (enrollment == null)
+            {
+                return NotFound();
+            }
+
+            var student = _context.Students.Find(enrollment.StudentId);
+            var course = _context.Courses.Find(enrollment.CourseId);
+
+            if (student == null || course == null)
+            {
+                return NotFound("Belonging student or course don't exist for this enrollment.");
+            }
+
+            var enrollmentResponse = new EnrollmentResponse
+            {
+                Id = enrollment.Id,
+                StudentId = enrollment.StudentId,
+                CourseId = enrollment.CourseId,
+                Points = enrollment.Points,
+                Student = student,
+                Course = course
+            };
+
+            return Ok(enrollmentResponse);
         }
 
         [HttpPost]
-        public ActionResult<Enrollment> CreateEnrollment(Enrollment enrollment)
+        public IActionResult CreateEnrollment(Enrollment enrollment)
         {
             bool studentExists = _context.Students.Any(s => s.Id == enrollment.StudentId);
 
@@ -59,7 +95,7 @@ namespace UniversityWebApp.Controllers
             _context.Enrollments.Add(enrollment);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetEnrollment), new { id = enrollment.Id }, enrollment);
+            return Created();
         }
 
 
@@ -79,7 +115,7 @@ namespace UniversityWebApp.Controllers
 
             _context.SaveChanges();
 
-            return NoContent();
+            return Ok();
         }
 
         [HttpDelete("{id}")]
@@ -95,7 +131,7 @@ namespace UniversityWebApp.Controllers
             _context.Enrollments.Remove(enrollment);
             _context.SaveChanges();
 
-            return NoContent();
+            return Ok();
         }
     }
 }

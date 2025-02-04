@@ -24,13 +24,13 @@
 <div class="row g-2 mb-3">
     <div class="col-18 col-md-6">
         <label for="studentFilter" class="form-label">Pretraži studente</label>
-        <InputText id="studentFilter" class="form-control" @bind-Value="studentFilter" />
+        <InputText id="studentFilter" class="form-control" @bind-Value="studentFilter" placeholder="Ime, prezime ili JMBAG..." />
         <button class="btn btn-primary mt-1" @onclick="LoadFilteredStudents">Pretraži studente</button>
     </div>
 
     <div class="col-18 col-md-6">
         <label for="courseFilter" class="form-label">Pretraži kolegije</label>
-        <InputText id="courseFilter" class="form-control" @bind-Value="courseFilter" />
+        <InputText id="courseFilter" class="form-control" @bind-Value="courseFilter" placeholder="Naziv kolegija..." />
         <button class="btn btn-primary mt-1" @onclick="LoadFilteredCourses">Pretraži kolegije</button>
     </div>
 </div>

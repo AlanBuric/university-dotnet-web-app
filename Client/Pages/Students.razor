@@ -29,15 +29,15 @@ else
 		<div class="row g-2 mb-3">
 			<div class="col-12 col-md-4">
 				<label for="Name" class="form-label">Ime</label>
-				<InputText id="Name" class="form-control" @bind-Value="currentStudent.FirstName" />
+				<InputText id="Name" class="form-control" @bind-Value="currentStudent.FirstName" placeholder="Ime" />
 			</div>
 			<div class="col-12 col-md-4">
 				<label for="Surname" class="form-label">Prezime</label>
-				<InputText id="Surname" class="form-control" @bind-Value="currentStudent.LastName" />
+				<InputText id="Surname" class="form-control" @bind-Value="currentStudent.LastName" placeholder="Prezime" />
 			</div>
 			<div class="col-12 col-md-4">
 				<label for="JMBAG" class="form-label">JMBAG</label>
-				<InputText id="JMBAG" class="form-control" @bind-Value="currentStudent.JMBAG" />
+				<InputText id="JMBAG" class="form-control" @bind-Value="currentStudent.JMBAG" placeholder="JMBAG" />
 			</div>
 		</div>
 
@@ -134,7 +134,7 @@ else
 				var index = Array.FindIndex(students!, student => student.Id == currentStudent.Id);
 
 				if (index >= 0) {
-					students[index] = currentStudent;
+					students![index] = currentStudent;
 				}
 			}
 			else
