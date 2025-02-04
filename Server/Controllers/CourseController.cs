@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using UniversityWebApp.Config;
 using UniversityWebApp.Database;
 using UniversityWebApp.Shared;
 
@@ -8,12 +6,12 @@ namespace UniversityWebApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CourseController(ApplicationDbContext context, IOptions<AppOptions> appOptions) : ControllerBase
+    public class CourseController(ApplicationDbContext context) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
 
         [HttpGet]
-        public ActionResult<IEnumerable<Course>> GetCourses([FromQuery] string? filter, [FromQuery] int? studentId)
+        public ActionResult<IEnumerable<Course>> GetCourses([FromQuery] string? filter)
         {
             var query = _context.Courses.AsQueryable();
 
@@ -21,13 +19,8 @@ namespace UniversityWebApp.Controllers
             {
                 query = query.Where(c => c.Name.Contains(filter));
             }
-            
-            if (studentId != null)
-            {
-                query = query.Where(c => c.Id == studentId);
-            }
 
-            return Ok(query.Take(appOptions.Value.MaxResponseRowCount).ToArray());
+            return Ok(query.ToArray());
         }
 
 

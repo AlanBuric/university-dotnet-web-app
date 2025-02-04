@@ -1,7 +1,4 @@
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using UniversityWebApp.Config;
 using UniversityWebApp.Database;
 using UniversityWebApp.Shared;
 
@@ -9,7 +6,7 @@ namespace UniversityWebApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class StudentController(ApplicationDbContext context, IOptions<AppOptions> appOptions) : ControllerBase
+    public class StudentController(ApplicationDbContext context) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
 
@@ -25,7 +22,7 @@ namespace UniversityWebApp.Controllers
                                       || s.JMBAG.Contains(filter));
             }
 
-            return Ok(query.Take(appOptions.Value.MaxResponseRowCount).ToArray());
+            return Ok(query.ToArray());
         }
 
         [HttpGet("{id}")]

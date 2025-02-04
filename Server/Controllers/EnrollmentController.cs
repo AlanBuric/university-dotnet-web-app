@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using UniversityWebApp.Config;
 using UniversityWebApp.Database;
 using UniversityWebApp.Shared;
 
