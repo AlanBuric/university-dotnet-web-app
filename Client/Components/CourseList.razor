@@ -1,0 +1,46 @@
+﻿@using UniversityWebApp.Shared
+@using System.Net.Http.Json
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Naziv</th>
+            <th>Radnje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var course in Courses)
+        {
+            <tr>
+                <td>@course.Id</td>
+                <td>@course.Name</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" @onclick="() => OnEditCourse.InvokeAsync(course)">Uredi</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => OnDeleteCourse.InvokeAsync(course)">Obriši</button>
+                    <button class="btn btn-info btn-sm ms-2" @onclick="() => OnToggleEnrollments.InvokeAsync(course.Id)">
+                        @(ExpandedCourseId == course.Id ? "Sakrij upise" : "Prikaži upise")
+                    </button>
+                </td>
+            </tr>
+
+            @if (ExpandedCourseId == course.Id)
+            {
+                <tr>
+                    <td colspan="3">
+                        <EnrollmentList CourseId="course.Id" OnError="OnError" />
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public Course[] Courses { get; set; } = Array.Empty<Course>();
+    [Parameter] public EventCallback<Course> OnEditCourse { get; set; }
+    [Parameter] public EventCallback<Course> OnDeleteCourse { get; set; }
+    [Parameter] public EventCallback<int> OnToggleEnrollments { get; set; }
+    [Parameter] public int? ExpandedCourseId { get; set; }
+    [Parameter] public EventCallback<string> OnError { get; set; }
+}

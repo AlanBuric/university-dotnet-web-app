@@ -1,0 +1,34 @@
+﻿@using UniversityWebApp.Shared
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>JMBAG</th>
+            <th>Radnje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in Students)
+        {
+            <tr>
+                <td>@student.Id</td>
+                <td>@student.FirstName</td>
+                <td>@student.LastName</td>
+                <td>@student.JMBAG</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" @onclick="() => OnEditStudent.InvokeAsync(student)">Uredi</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => OnDeleteStudent.InvokeAsync(student)">Obriši</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public Student[] Students { get; set; } = Array.Empty<Student>();
+    [Parameter] public EventCallback<Student> OnEditStudent { get; set; }
+    [Parameter] public EventCallback<Student> OnDeleteStudent { get; set; }
+}

@@ -1,0 +1,111 @@
+﻿@using UniversityWebApp.Shared
+@inject HttpClient Http
+
+@if (enrollments == null)
+{
+    <p><em>Učitavam upise...</em></p>
+}
+else if (enrollments.Length == 0)
+{
+    <p>Nema upisanih studenata na ovome kolegiju.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Bodovi</th>
+                <th>Radnje</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var enrollment in enrollments)
+            {
+                <tr>
+                    <td>@enrollment.Student.FirstName @enrollment.Student.LastName (@enrollment.Student.JMBAG)</td>
+                    <td>
+                        @if (editingEnrollmentId == enrollment.Id)
+                        {
+                            <InputNumber @bind-Value="editingPoints" class="form-control form-control-sm" style="width:80px" />
+                        }
+                        else
+                        {
+                            @enrollment.Points
+                        }
+                    </td>
+                    <td>
+                        @if (editingEnrollmentId == enrollment.Id)
+                        {
+                            <button class="btn btn-success btn-sm" @onclick="() => SaveEnrollment(enrollment)">Spremi</button>
+                            <button class="btn btn-secondary btn-sm ms-1" @onclick="CancelEdit">Odustani</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditEnrollment(enrollment)">Uredi bodove</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+    [Parameter] public EventCallback<string> OnError { get; set; }
+
+    private EnrollmentResponse[]? enrollments;
+    private int? editingEnrollmentId = null;
+    private int editingPoints;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEnrollments();
+    }
+
+    private async Task LoadEnrollments()
+    {
+        try
+        {
+            enrollments = await Http.GetFromJsonAsync<EnrollmentResponse[]>($"api/enrollment?courseId={CourseId}");
+        }
+        catch (Exception ex)
+        {
+            await OnError.InvokeAsync($"Greška pri učitavanju upisa: {ex.Message}");
+        }
+    }
+
+    private void EditEnrollment(EnrollmentResponse enrollment)
+    {
+        editingEnrollmentId = enrollment.Id;
+        editingPoints = enrollment.Points;
+    }
+
+    private void CancelEdit()
+    {
+        editingEnrollmentId = null;
+    }
+
+    private async Task SaveEnrollment(EnrollmentResponse enrollment)
+    {
+        enrollment.Points = editingPoints;
+        try
+        {
+            var response = await Http.PutAsJsonAsync("api/enrollment", enrollment);
+            if (!response.IsSuccessStatusCode)
+            {
+                await OnError.InvokeAsync($"Greška pri uređivanju bodova: {response.ReasonPhrase}");
+            }
+            else
+            {
+                await LoadEnrollments();
+                editingEnrollmentId = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            await OnError.InvokeAsync($"Došlo je do pogreške pri uređivanju bodova: {ex.Message}");
+        }
+    }
+}

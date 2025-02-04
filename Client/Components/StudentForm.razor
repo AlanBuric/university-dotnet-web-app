@@ -1,0 +1,38 @@
+﻿@using UniversityWebApp.Shared
+@using Microsoft.AspNetCore.Components.Forms
+
+<EditForm Model="StudentModel" OnValidSubmit="OnValidSubmit" FormName="studentForm">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+
+	<div class="row g-2 mb-3">
+		<div class="col-12 col-md-4">
+			<label for="FirstName" class="form-label">Ime</label>
+			<InputText id="FirstName" class="form-control" @bind-Value="StudentModel.FirstName" placeholder="Ime" />
+		</div>
+		<div class="col-12 col-md-4">
+			<label for="LastName" class="form-label">Prezime</label>
+			<InputText id="LastName" class="form-control" @bind-Value="StudentModel.LastName" placeholder="Prezime" />
+		</div>
+		<div class="col-12 col-md-4">
+			<label for="JMBAG" class="form-label">JMBAG</label>
+			<InputText id="JMBAG" class="form-control" @bind-Value="StudentModel.JMBAG" placeholder="JMBAG" />
+		</div>
+	</div>
+
+	<button type="submit" class="btn btn-success">
+		@(IsEditing ? "Spremi promjene" : "Dodaj studenta")
+	</button>
+
+	@if (IsEditing)
+	{
+		<button type="button" class="btn btn-secondary ms-2" @onclick="OnCancel">Odustani</button>
+	}
+</EditForm>
+
+@code {
+	[Parameter] public Student StudentModel { get; set; } = new Student();
+	[Parameter] public bool IsEditing { get; set; }
+	[Parameter] public EventCallback OnValidSubmit { get; set; }
+	[Parameter] public EventCallback OnCancel { get; set; }
+}
