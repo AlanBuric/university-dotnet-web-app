@@ -1,6 +1,7 @@
 ﻿@page "/students"
-@using UniversityWebApp.Components
 @inject HttpClient Http
+@using UniversityWebApp.Data
+@using UniversityWebApp.Components
 
 <PageTitle>Studenti</PageTitle>
 
@@ -8,135 +9,164 @@
 
 @if (!string.IsNullOrEmpty(apiError))
 {
-    <div class="alert alert-danger" role="alert">
-        @apiError
-    </div>
+	<div class="alert alert-danger" role="alert">
+		@apiError
+	</div>
 }
 
 <p>Niže je naveden popis studenata upisanih na Sveučilište.</p>
 
 @if (students == null)
 {
-    <p><em>Učitavam...</em></p>
+	<p><em>Učitavam...</em></p>
 }
 else
 {
-    <h4>@(isEditing ? "Uređivanje podataka o studentu" : "Dodavanje novog studenta")</h4>
-    
-    <StudentForm StudentModel="currentStudent" IsEditing="isEditing"
-                 OnValidSubmit="HandleValidSubmit" OnCancel="CancelEdit" />
+	<h4>@(isEditing ? "Uređivanje podataka o studentu" : "Dodavanje novog studenta")</h4>
 
-    <hr />
+	<StudentForm StudentModel="currentStudent" IsEditing="isEditing"
+				 OnValidSubmit="HandleValidSubmit" OnCancel="CancelEdit" />
 
-    @if (students.Length > 0)
-    {
-        <StudentList Students="students" OnEditStudent="EditStudent" OnDeleteStudent="DeleteStudent" />
-    }
-    else
-    {
-        <p class="text-center">Sveučilište trenutno nema upisanih studenata.</p>
-    }
+	<hr />
+
+	@if (students.Length > 0)
+	{
+		<StudentList Students="students"
+					 OnEditStudent="EditStudent"
+					 OnDeleteStudent="DeleteStudent"
+					 OnToggleEnrollments="ToggleEnrollments" />
+	}
+	else
+	{
+		<p class="text-center">Sveučilište trenutno nema upisanih studenata.</p>
+	}
 }
 
 @code {
-    private Student[]? students;
-    private Student currentStudent = new Student();
-    private string? apiError;
-    private bool isEditing = false;
+	private StudentWithInfo[]? students;
+	private Student currentStudent = new Student();
+	private string? apiError;
+	private bool isEditing = false;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadStudents();
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadStudents();
+	}
 
-    private async Task LoadStudents()
-    {
-        apiError = null;
-        try
-        {
-            students = await Http.GetFromJsonAsync<Student[]>("api/student");
-        }
-        catch (Exception ex)
-        {
-            apiError = $"Došlo je do pogreške pri učitavanju studenata: {ex.Message}";
-        }
-    }
+	private async Task LoadStudents()
+	{
+		apiError = null;
 
-    private async Task HandleValidSubmit()
-    {
-        apiError = null;
-        try
-        {
-            if (isEditing)
-            {
-                var response = await Http.PutAsJsonAsync("api/student", currentStudent);
-                if (!response.IsSuccessStatusCode)
-                {
-                    apiError = $"Greška prilikom uređivanja studenta: {response.ReasonPhrase}";
-                    return;
-                }
-                isEditing = false;
+		try
+		{
+			students = (await Http.GetFromJsonAsync<Student[]>("api/student"))?.Select(s => new StudentWithInfo { Student = s }).ToArray() ?? students;
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške pri učitavanju studenata: {ex.Message}";
+		}
+	}
 
-                var index = Array.FindIndex(students!, s => s.Id == currentStudent.Id);
-                if (index >= 0)
-                {
-                    students![index] = currentStudent;
-                }
-            }
-            else
-            {
-                var response = await Http.PostAsJsonAsync("api/student", currentStudent);
-                if (!response.IsSuccessStatusCode)
-                {
-                    apiError = $"Greška prilikom dodavanja studenta: {await response.Content.ReadAsStringAsync()}";
-                    return;
-                }
-                await LoadStudents();
-            }
-            currentStudent = new Student();
-        }
-        catch (Exception ex)
-        {
-            apiError = $"Došlo je do pogreške: {ex.Message}";
-        }
-    }
+	private async Task HandleValidSubmit()
+	{
+		apiError = null;
 
-    private void EditStudent(Student student)
-    {
-        isEditing = true;
-        apiError = null;
-        currentStudent = new Student
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            JMBAG = student.JMBAG
-        };
-    }
+		try
+		{
+			if (isEditing)
+			{
+				var response = await Http.PutAsJsonAsync("api/student", currentStudent);
 
-    private async Task DeleteStudent(Student student)
-    {
-        apiError = null;
-        try
-        {
-            var response = await Http.DeleteAsync($"api/student/{student.Id}");
-            if (!response.IsSuccessStatusCode)
-            {
-                apiError = $"Greška pri brisanju studenta: {response.ReasonPhrase}";
-                return;
-            }
-            await LoadStudents();
-        }
-        catch (Exception ex)
-        {
-            apiError = $"Došlo je do pogreške pri brisanju: {ex.Message}";
-        }
-    }
+				if (!response.IsSuccessStatusCode)
+				{
+					apiError = $"Greška prilikom uređivanja studenta: {response.ReasonPhrase}";
+					return;
+				}
 
-    private void CancelEdit()
-    {
-        isEditing = false;
-        currentStudent = new Student();
-        apiError = null;
-    }
+				isEditing = false;
+
+				var index = Array.FindIndex(students!, s => s.Student.Id == currentStudent.Id);
+
+				if (index >= 0)
+				{
+					students![index].Student = currentStudent;
+				}
+			}
+			else
+			{
+				var response = await Http.PostAsJsonAsync("api/student", currentStudent);
+
+				if (!response.IsSuccessStatusCode)
+				{
+					apiError = $"Greška prilikom dodavanja studenta: {await response.Content.ReadAsStringAsync()}";
+					return;
+				}
+
+				await LoadStudents();
+			}
+
+			currentStudent = new Student();
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške: {ex.Message}";
+		}
+	}
+
+	private void EditStudent(Student student)
+	{
+		isEditing = true;
+		apiError = null;
+		currentStudent = new Student
+			{
+				Id = student.Id,
+				FirstName = student.FirstName,
+				LastName = student.LastName,
+				JMBAG = student.JMBAG
+			};
+	}
+
+	private async Task DeleteStudent(Student student)
+	{
+		apiError = null;
+		try
+		{
+			var response = await Http.DeleteAsync($"api/student/{student.Id}");
+			if (!response.IsSuccessStatusCode)
+			{
+				apiError = $"Greška pri brisanju studenta: {response.ReasonPhrase}";
+				return;
+			}
+			await LoadStudents();
+		}
+		catch (Exception ex)
+		{
+			apiError = $"Došlo je do pogreške pri brisanju: {ex.Message}";
+		}
+	}
+
+	private void CancelEdit()
+	{
+		isEditing = false;
+		currentStudent = new Student();
+		apiError = null;
+	}
+
+	private async Task ToggleEnrollments(int studentId)
+	{
+		var studentInfo = students != null ? Array.Find(students, s => s.Student.Id == studentId) : null;
+
+		if (studentInfo != null && (studentInfo.Expanded = !studentInfo.Expanded) && studentInfo.Enrollments == null)
+		{
+			try
+			{
+				var enrollments = await Http.GetFromJsonAsync<EnrollmentResponse[]>($"api/enrollment?studentId={studentId}");
+				studentInfo.Enrollments = enrollments;
+			}
+			catch (Exception ex)
+			{
+				apiError = $"Greška pri učitavanju upisa za studenta {studentId}: {ex.Message}";
+			}
+		}
+	}
 }

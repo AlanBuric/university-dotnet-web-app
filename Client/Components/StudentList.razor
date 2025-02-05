@@ -1,4 +1,4 @@
-﻿@using UniversityWebApp.Shared
+﻿@using UniversityWebApp.Data
 
 <table class="table">
     <thead>
@@ -11,24 +11,63 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var student in Students)
+        @foreach (var studentInfo in Students)
         {
             <tr>
-                <td>@student.Id</td>
-                <td>@student.FirstName</td>
-                <td>@student.LastName</td>
-                <td>@student.JMBAG</td>
+                <td>@studentInfo.Student.Id</td>
+                <td>@studentInfo.Student.FirstName</td>
+                <td>@studentInfo.Student.LastName</td>
+                <td>@studentInfo.Student.JMBAG</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" @onclick="() => OnEditStudent.InvokeAsync(student)">Uredi</button>
-                    <button class="btn btn-danger btn-sm" @onclick="() => OnDeleteStudent.InvokeAsync(student)">Obriši</button>
+                    <button class="btn btn-primary btn-sm" @onclick="() => OnEditStudent.InvokeAsync(studentInfo.Student)">Uredi</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => OnDeleteStudent.InvokeAsync(studentInfo.Student)">Obriši</button>
+                    <button class="btn btn-info btn-sm ms-2" @onclick="() => OnToggleEnrollments.InvokeAsync(studentInfo.Student.Id)">
+                        @(studentInfo.Expanded ? "Sakrij upise" : "Prikaži upise")
+                    </button>
                 </td>
             </tr>
+            @if (studentInfo.Expanded)
+            {
+                <tr>
+                    <td colspan="5">
+                        @if (studentInfo.Enrollments == null)
+                        {
+                            <p><em>Učitavam upise...</em></p>
+                        }
+                        else if (studentInfo.Enrollments.Length == 0)
+                        {
+                            <p>Nema upisanih kolegija.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Naziv kolegija</th>
+                                        <th>Ostvareni bodovi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var enrollment in studentInfo.Enrollments)
+                                    {
+                                        <tr>
+                                            <td>@enrollment.Course.Name</td>
+                                            <td>@enrollment.Points</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>
 
 @code {
-    [Parameter] public Student[] Students { get; set; } = Array.Empty<Student>();
+    [Parameter] public StudentWithInfo[] Students { get; set; } = Array.Empty<StudentWithInfo>();
     [Parameter] public EventCallback<Student> OnEditStudent { get; set; }
     [Parameter] public EventCallback<Student> OnDeleteStudent { get; set; }
+    [Parameter] public EventCallback<int> OnToggleEnrollments { get; set; }
 }
